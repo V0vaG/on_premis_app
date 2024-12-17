@@ -3,10 +3,14 @@
 source .env
 
 # proejct='v_bank'
-proejct='topix'
+# proejct='topix'
+# proejct='weather'
+proejct='vpkg'
 
 DOCKER_USER='vova0911'
 GITHUB_USER='V0vaG'
+
+VOLUMES="['/home/$USER/script_files/${proejct}:/root/script_files/${proejct}']"
 
 git clone git@github.com:${GITHUB_USER}/${proejct}_src.git
 
@@ -14,8 +18,23 @@ cp -r ${proejct}_src/app .
 cp -r ${proejct}_src/nginx .
 
 ARCH=$(dpkg --print-architecture)
-VERSION='1.0.478'
+VERSION='0.0.0'
 PORT='85'
+
+dot_env_file="/home/vova/GIT/${proejct}_src/app/.env"
+env_file="${proejct}_src/app/env"
+
+if [[ -f $dot_env_file ]]; then
+	echo "sourcing $dot_env_file"
+	source $dot_env_file
+fi
+
+if [[ -f $env_file ]]; then
+	echo "sourcing $env_file"
+	source $env_file
+else
+	echo "$env_file not found"
+fi
 
 echo "Arch: $ARCH"
 echo "Version: $VERSION "
@@ -44,14 +63,17 @@ docker_install(){
 }
 
 docker_build(){
-    docker build --build-arg VERSION=$VERSION  -t ${DOCKER_USER}/${proejct}:${ARCH}_latest ./app
+	echo "building with args: $ARGS"
+    docker build $ARGS -t ${DOCKER_USER}/${proejct}:${ARCH}_latest ./app
     docker build  -t ${DOCKER_USER}/nginx_images:${ARCH}_latest ./nginx
     docker tag ${DOCKER_USER}/${proejct}:${ARCH}_latest ${DOCKER_USER}/${proejct}:${ARCH}_${VERSION}
 }
 
 app_test(){
-    docker run -d --name ${proejct}_test ${DOCKER_USER}/${proejct}:${ARCH}_${VERSION}
-	bash site_test.sh
+    docker run -d --name ${proejct}_test -p $PORT:5000 ${DOCKER_USER}/${proejct}:${ARCH}_${VERSION}
+    echo "wating for app to start"
+    sleep 5
+	bash site_test.sh $PORT
 	docker stop ${proejct}_test
 	docker rm ${proejct}_test
 	docker images
@@ -72,14 +94,14 @@ docker_push(){
     docker push ${DOCKER_USER}/nginx_images:${ARCH}_latest
 }
 
-create_docker_compose(){
+
+docker_cd(){
 echo "services:
     app:
         image: ${DOCKER_USER}/${proejct}:${ARCH}_latest
         restart: always
         command: gunicorn -w 4 -b 0.0.0.0:5000 wsgi:app
-        volumes:
-            - /home/$USER/script_files/${proejct}:/root/script_files/${proejct}
+        volumes: ${VOLUMES}
     nginx:
         image: ${DOCKER_USER}/nginx_images:${ARCH}_latest
         container_name: nginx
@@ -90,9 +112,6 @@ echo "services:
             - "$PORT:80"
 " > docker-compose.yml
 
-}
-
-docker_cd(){
     docker-compose down
     docker-compose up -d --build --scale app=2
 }
@@ -107,11 +126,9 @@ clean_up(){
 
 docker_build
 
-#app_test
+app_test
 
 # docker_push
-
-create_docker_compose
 
 docker_cd
 
