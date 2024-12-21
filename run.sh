@@ -19,6 +19,7 @@ cp -r ${proejct}_src/nginx .
 
 ARCH=$(dpkg --print-architecture)
 VERSION='0.0.0'
+BUILD_NUM='on_premise'
 PORT='85'
 
 dot_env_file="/home/vova/GIT/${proejct}_src/app/.env"
@@ -91,12 +92,12 @@ docker_push(){
     fi
     docker push ${DOCKER_USER}/${proejct}:${ARCH}_${VERSION}
     docker push ${DOCKER_USER}/${proejct}:${ARCH}_latest
-    docker push ${DOCKER_USER}/nginx_images:${ARCH}_latest
+    # docker push ${DOCKER_USER}/nginx_images:${ARCH}_latest
 }
 
 
 docker_cd(){
-echo "services:
+    echo "services:
     app:
         image: ${DOCKER_USER}/${proejct}:${ARCH}_latest
         restart: always
@@ -126,7 +127,7 @@ clean_up(){
 
 docker_build
 
-app_test
+# app_test
 
 # docker_push
 
