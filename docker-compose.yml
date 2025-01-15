@@ -1,15 +1,23 @@
 services:
-    app:
-        image: vova0911/vpkg:amd64_latest
-        restart: always
-        command: gunicorn -w 4 -b 0.0.0.0:5000 wsgi:app
-        volumes: ['/home/vova/script_files/vpkg:/root/script_files/vpkg']
-    nginx:
-        image: vova0911/nginx_images:amd64_latest
-        container_name: nginx
-        restart: always
-        depends_on:
-            - app
-        ports:
-            - 85:80
+  app:
+    image: vova0911/lora:armhf_latest
+    restart: always
+    command: python3 app.py
+    volumes: ['/home/root/script_files/lora:/root/script_files/lora']
+    ports:
+      - 5000:5000
+    devices:
+      - /dev/spidev0.0:/dev/spidev0.0
+      - /dev/spidev0.1:/dev/spidev0.1
+      - /dev/gpiomem:/dev/gpiomem
+    privileged: true
+
+  nginx:
+    image: vova0911/nginx_images:armhf_latest
+    container_name: nginx
+    restart: always
+    depends_on:
+      - app
+    ports:
+      - 85:80
 

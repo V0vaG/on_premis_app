@@ -5,14 +5,16 @@ source .env
 # proejct='v_bank'
 # proejct='topix'
 # proejct='weather'
-proejct='vpkg'
+# proejct='vpkg'
+proejct='lora'
+
 
 DOCKER_USER='vova0911'
 GITHUB_USER='V0vaG'
 
 VOLUMES="['/home/$USER/script_files/${proejct}:/root/script_files/${proejct}']"
 
-git clone git@github.com:${GITHUB_USER}/${proejct}_src.git
+#git clone git@github.com:${GITHUB_USER}/${proejct}_src.git
 
 cp -r ${proejct}_src/app .
 cp -r ${proejct}_src/nginx .
@@ -28,6 +30,9 @@ env_file="${proejct}_src/app/env"
 if [[ -f $dot_env_file ]]; then
 	echo "sourcing $dot_env_file"
 	source $dot_env_file
+else
+        echo "$dot_env_file not found"
+
 fi
 
 if [[ -f $env_file ]]; then
@@ -92,7 +97,7 @@ docker_push(){
     fi
     docker push ${DOCKER_USER}/${proejct}:${ARCH}_${VERSION}
     docker push ${DOCKER_USER}/${proejct}:${ARCH}_latest
-    # docker push ${DOCKER_USER}/nginx_images:${ARCH}_latest
+ #   docker push ${DOCKER_USER}/nginx_images:${ARCH}_latest
 }
 
 
@@ -114,7 +119,36 @@ docker_cd(){
 " > docker-compose.yml
 
     docker-compose down
-    docker-compose up -d --build --scale app=2
+    docker-compose up -d --build --scale app=1
+}
+
+lora_docker_cd(){
+    echo "services:
+  app:
+    image: ${DOCKER_USER}/${proejct}:${ARCH}_latest
+    restart: always
+    command: python3 app.py
+    volumes: ${VOLUMES}
+    ports:
+      - "5000:5000"
+    devices:
+      - "/dev/spidev0.0:/dev/spidev0.0"
+      - "/dev/spidev0.1:/dev/spidev0.1"
+      - "/dev/gpiomem:/dev/gpiomem"
+    privileged: true
+
+  nginx:
+    image: ${DOCKER_USER}/nginx_images:${ARCH}_latest
+    container_name: nginx
+    restart: always
+    depends_on:
+      - app
+    ports:
+      - "$PORT:80"
+" > docker-compose.yml
+
+    docker-compose down
+    docker-compose up -d --build --scale app=1
 }
 
 clean_up(){
@@ -123,15 +157,15 @@ clean_up(){
 	rm -rf ${proejct}_src
 }
 
-# docker_install 
+#docker_install 
 
-docker_build
+#docker_build
 
-# app_test
+#app_test
 
-# docker_push
+#docker_push
 
-docker_cd
+lora_docker_cd
 
 clean_up
 
