@@ -1,20 +1,36 @@
 #!/bin/bash
 
-docker-compose down
-
 source .env
-
 
 # Start SSH agent and add the key
 eval "$(ssh-agent -s)"
 ssh-add /home/vova/.ssh/id_ed25519
 
+repo_list=('v_bank' 'topix' 'weather' 'vpkg' 'lora')
 
-#proejct='v_bank'
-#proejct='topix'
-#proejct='weather'
-#proejct='vpkg'
-proejct='lora'
+i=1
+echo "Project list:"
+echo "0. exit"
+for item in "${repo_list[@]}"; do
+    echo "$i. $item"
+    let i++
+done
+echo "$i. docker-compose down"
+
+
+read -p "Enter project to deploy: " ans
+
+if [[ $ans = '0' ]]; then
+    exit
+elif [[ $ans = "$i" ]]; then
+    docker-compose down
+    rm -rf docker-compose.yml
+    exit
+fi
+
+echo "deploying ${repo_list[$((ans-1))]}"
+
+proejct="${repo_list[$((ans-1))]}"
 
 
 DOCKER_USER='vova0911'
@@ -142,11 +158,11 @@ clean_up(){
 
 #docker_install 
 
-docker_build
+#docker_build
 
-app_test
+#app_test
 
-docker_push
+#docker_push
 
 docker_cd
 
