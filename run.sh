@@ -4,14 +4,15 @@ source .env
 
 json_file="config.json"
 
-optinos_list=('CI' 'DOCKER_PUSH' 'CD' 'APP_SCALE')
+optinos_list=('CI' 'DOCKER_CLONE' 'DOCKER_PUSH' 'CD' 'APP_SCALE')
 
 if [[ ! -f $json_file ]]; then
         echo '{
     "CI": "0",
     "DOCKER_PUSH": "0",
     "CD": "0",
-    "APP_SCALE": "1"
+    "APP_SCALE": "1",
+    "DOCKER_CLONE": "0",
 }
 ' > $json_file
 fi
@@ -32,10 +33,12 @@ refresh_settings(){
 
   CI=$(get_settings "CI")
   DOCKER_PUSH=$(get_settings "DOCKER_PUSH")
+  DOCKER_CLONE=$(get_settings "DOCKER_CLONE")
   CD=$(get_settings "CD")
   APP_SCALE=$(get_settings "APP_SCALE")
   echo "CI: ${CI}"
   echo "Docker push: $DOCKER_PUSH"
+  echo "Docker clone: $DOCKER_CLONE"
   echo "CD: ${CD}"
   echo "App scale: ${APP_SCALE}"
 }
@@ -49,6 +52,7 @@ settings(){
     read -p "set the var $1 to: " ans
     set_settings "$1" "$ans"
   }
+  cange_var "DOCKER_CLONE"
   cange_var "CI"
   cange_var "DOCKER_PUSH"
   cange_var "CD"
@@ -58,16 +62,6 @@ settings(){
   exit
 
 }
-
-#set_settings "CI" "1"
-
-#CI=$(get_settings "CI")
-#DOCKER_PUSH=$(get_settings "DOCKER_PUSH")
-#CD=$(get_settings "CD")
-
-#echo "CI: $CI"
-#echo "Docker push: $DOCKER_PUSH"
-#echo "CD: $CD"
 
 # Start SSH agent and add the key
 eval "$(ssh-agent -s)"
@@ -107,10 +101,21 @@ GITHUB_USER='V0vaG'
 
 VOLUMES="['/home/$USER/script_files/${proejct}:/root/script_files/${proejct}']"
 
-git clone git@github.com:${GITHUB_USER}/${proejct}_src.git
+if [[ "$DOCKER_CLONE" = '1' ]]; then
+  git clone git@github.com:${GITHUB_USER}/${proejct}_src.git
+  cp -r ${proejct}_src/app .
+  cp -r ${proejct}_src/nginx .
+  env_file="${proejct}_src/app/env"
+  if [[ -f $env_file ]]; then
+        echo "sourcing $env_file"
+        source $env_file
+  else
+        echo "$env_file not found"
+  fi
 
-cp -r ${proejct}_src/app .
-cp -r ${proejct}_src/nginx .
+fi
+
+
 
 ARCH=$(dpkg --print-architecture)
 VERSION='0.0.0'
@@ -126,13 +131,6 @@ if [[ -f $dot_env_file ]]; then
 else
         echo "$dot_env_file not found"
 
-fi
-
-if [[ -f $env_file ]]; then
-	echo "sourcing $env_file"
-	source $env_file
-else
-	echo "$env_file not found"
 fi
 
 echo "Arch: $ARCH"
@@ -203,8 +201,8 @@ docker_cd(){
         volumes: ${VOLUMES}
         ${DEVICES}
         privileged: true
-        ports:
-          - "5000:5000"
+#        ports:
+#          - "5000:5000"
     nginx:
         image: ${DOCKER_USER}/nginx_images:${ARCH}_latest
         container_name: nginx
