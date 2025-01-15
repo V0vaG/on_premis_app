@@ -2,36 +2,45 @@
 
 source .env
 
-
 json_file="config.json"
+
+optinos_list=('CI' 'DOCKER_PUSH' 'CD' 'APP_SCALE')
 
 if [[ ! -f $json_file ]]; then
         echo '{
     "CI": "0",
     "DOCKER_PUSH": "0",
-    "CD": "0"
+    "CD": "0",
+    "APP_SCALE": "1"
 }
 ' > $json_file
 fi
 
 get_settings() {
-    local key=$1
-    grep -oP "\"$key\":\s*\"\K[^\"]+" "$json_file"
+    grep -oP "\"$1\":\s*\"\K[^\"]+" "$json_file"
 }
 
 set_settings() {
-    local new_var=$2
-    sed -i "s/\"$1\":\s*\"[^\"]*\"/\"$1\": \"$new_var\"/" "$json_file"
+    sed -i "s/\"$1\":\s*\"[^\"]*\"/\"$1\": \"$2\"/" "$json_file"
 }
 
 refresh_settings(){
+
+  #for item in "${options_list[@]}"; do
+  #  item=$(get_settings "$item")
+  #done
+
   CI=$(get_settings "CI")
   DOCKER_PUSH=$(get_settings "DOCKER_PUSH")
   CD=$(get_settings "CD")
+  APP_SCALE=$(get_settings "APP_SCALE")
   echo "CI: ${CI}"
   echo "Docker push: $DOCKER_PUSH"
   echo "CD: ${CD}"
+  echo "App scale: ${APP_SCALE}"
 }
+
+refresh_settings
 
 settings(){
   refresh_settings
@@ -43,6 +52,7 @@ settings(){
   cange_var "CI"
   cange_var "DOCKER_PUSH"
   cange_var "CD"
+  cange_var "APP_SCALE"
 
   refresh_settings
   exit
@@ -205,8 +215,7 @@ docker_cd(){
             - "$PORT:80"
 " > docker-compose.yml
 
-#    docker-compose down
-    docker-compose up -d --build --scale app=1
+    docker-compose up -d --build --scale app="$APP_SCALE"
 }
 
 clean_up(){
@@ -217,14 +226,18 @@ clean_up(){
 
 #docker_install 
 
-#docker_build
+if [[ "$CI" = '1' ]]; then
+  docker_build
+  app_test
+fi
 
-#app_test
+if [[ "$DOCKER_PUSH" = '1' ]]; then
+  docker_push
+fi
 
-#docker_push
-
-docker_cd
-
+if [[ "$CD" = '1' ]]; then
+  docker_cd
+fi
 clean_up
 
 echo "http://127.0.0.1:$PORT"
