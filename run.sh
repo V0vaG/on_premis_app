@@ -2,10 +2,10 @@
 
 source .env
 
-# proejct='v_bank'
+#proejct='v_bank'
 # proejct='topix'
 # proejct='weather'
-# proejct='vpkg'
+#proejct='vpkg'
 proejct='lora'
 
 
@@ -41,6 +41,7 @@ if [[ -f $env_file ]]; then
 else
 	echo "$env_file not found"
 fi
+
 
 echo "Arch: $ARCH"
 echo "Version: $VERSION "
@@ -106,8 +107,12 @@ docker_cd(){
     app:
         image: ${DOCKER_USER}/${proejct}:${ARCH}_latest
         restart: always
-        command: gunicorn -w 4 -b 0.0.0.0:5000 wsgi:app
+        command: ${COMMAND}
         volumes: ${VOLUMES}
+        ${DEVICES}
+        privileged: true
+        ports:
+          - "5000:5000"
     nginx:
         image: ${DOCKER_USER}/nginx_images:${ARCH}_latest
         container_name: nginx
@@ -122,35 +127,6 @@ docker_cd(){
     docker-compose up -d --build --scale app=1
 }
 
-lora_docker_cd(){
-    echo "services:
-  app:
-    image: ${DOCKER_USER}/${proejct}:${ARCH}_latest
-    restart: always
-    command: python3 app.py
-    volumes: ${VOLUMES}
-    ports:
-      - "5000:5000"
-    devices:
-      - "/dev/spidev0.0:/dev/spidev0.0"
-      - "/dev/spidev0.1:/dev/spidev0.1"
-      - "/dev/gpiomem:/dev/gpiomem"
-    privileged: true
-
-  nginx:
-    image: ${DOCKER_USER}/nginx_images:${ARCH}_latest
-    container_name: nginx
-    restart: always
-    depends_on:
-      - app
-    ports:
-      - "$PORT:80"
-" > docker-compose.yml
-
-    docker-compose down
-    docker-compose up -d --build --scale app=1
-}
-
 clean_up(){
 	rm -rf app 
 	rm -rf nginx 
@@ -159,13 +135,13 @@ clean_up(){
 
 #docker_install 
 
-#docker_build
+docker_build
 
-#app_test
+app_test
 
-#docker_push
+docker_push
 
-lora_docker_cd
+docker_cd
 
 clean_up
 
