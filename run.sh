@@ -2,11 +2,17 @@
 
 source .env
 
+
+# Start SSH agent and add the key
+eval "$(ssh-agent -s)"
+ssh-add /home/vova/.ssh/id_ed25519
+
+
 #proejct='v_bank'
-# proejct='topix'
-# proejct='weather'
+#proejct='topix'
+proejct='weather'
 #proejct='vpkg'
-proejct='lora'
+#proejct='lora'
 
 
 DOCKER_USER='vova0911'
@@ -14,7 +20,7 @@ GITHUB_USER='V0vaG'
 
 VOLUMES="['/home/$USER/script_files/${proejct}:/root/script_files/${proejct}']"
 
-#git clone git@github.com:${GITHUB_USER}/${proejct}_src.git
+git clone git@github.com:${GITHUB_USER}/${proejct}_src.git
 
 cp -r ${proejct}_src/app .
 cp -r ${proejct}_src/nginx .
@@ -41,7 +47,6 @@ if [[ -f $env_file ]]; then
 else
 	echo "$env_file not found"
 fi
-
 
 echo "Arch: $ARCH"
 echo "Version: $VERSION "
