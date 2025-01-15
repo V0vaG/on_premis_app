@@ -2,6 +2,63 @@
 
 source .env
 
+
+json_file="config.json"
+
+if [[ ! -f $json_file ]]; then
+        echo '{
+    "CI": "0",
+    "DOCKER_PUSH": "0",
+    "CD": "0"
+}
+' > $json_file
+fi
+
+get_settings() {
+    local key=$1
+    grep -oP "\"$key\":\s*\"\K[^\"]+" "$json_file"
+}
+
+set_settings() {
+    local new_var=$2
+    sed -i "s/\"$1\":\s*\"[^\"]*\"/\"$1\": \"$new_var\"/" "$json_file"
+}
+
+refresh_settings(){
+  CI=$(get_settings "CI")
+  DOCKER_PUSH=$(get_settings "DOCKER_PUSH")
+  CD=$(get_settings "CD")
+  echo "CI: ${CI}"
+  echo "Docker push: $DOCKER_PUSH"
+  echo "CD: ${CD}"
+}
+
+settings(){
+  refresh_settings
+
+  cange_var(){
+    read -p "set the var $1 to: " ans
+    set_settings "$1" "$ans"
+  }
+  cange_var "CI"
+  cange_var "DOCKER_PUSH"
+  cange_var "CD"
+
+  refresh_settings
+  exit
+
+}
+
+#set_settings "CI" "1"
+
+#CI=$(get_settings "CI")
+#DOCKER_PUSH=$(get_settings "DOCKER_PUSH")
+#CD=$(get_settings "CD")
+
+#echo "CI: $CI"
+#echo "Docker push: $DOCKER_PUSH"
+#echo "CD: $CD"
+
 # Start SSH agent and add the key
 eval "$(ssh-agent -s)"
 ssh-add /home/vova/.ssh/id_ed25519
@@ -16,6 +73,7 @@ for item in "${repo_list[@]}"; do
     let i++
 done
 echo "$i. docker-compose down"
+echo "$((i+1)). Settings"
 
 
 read -p "Enter project to deploy: " ans
@@ -26,12 +84,13 @@ elif [[ $ans = "$i" ]]; then
     docker-compose down
     rm -rf docker-compose.yml
     exit
+elif [[ $ans = "$((i+1))" ]]; then
+	settings
 fi
 
 echo "deploying ${repo_list[$((ans-1))]}"
 
 proejct="${repo_list[$((ans-1))]}"
-
 
 DOCKER_USER='vova0911'
 GITHUB_USER='V0vaG'
