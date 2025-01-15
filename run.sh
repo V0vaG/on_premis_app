@@ -1,5 +1,7 @@
 #!/bin/bash
 
+docker-compose down
+
 source .env
 
 
@@ -10,9 +12,9 @@ ssh-add /home/vova/.ssh/id_ed25519
 
 #proejct='v_bank'
 #proejct='topix'
-proejct='weather'
+#proejct='weather'
 #proejct='vpkg'
-#proejct='lora'
+proejct='lora'
 
 
 DOCKER_USER='vova0911'
@@ -128,7 +130,7 @@ docker_cd(){
             - "$PORT:80"
 " > docker-compose.yml
 
-    docker-compose down
+#    docker-compose down
     docker-compose up -d --build --scale app=1
 }
 
