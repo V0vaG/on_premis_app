@@ -1,8 +1,16 @@
 {
+<<<<<<< HEAD
     "CI": "1",
     "DOCKER_PUSH": "1",
     "CD": "0",
     "APP_SCALE": "1",
     "HELM": "1"
+=======
+    "CI": "",
+    "DOCKER_PUSH": "",
+    "CD": "1",
+    "APP_SCALE": "1",
+    "DOCKER_CLONE": "",
+>>>>>>> 46a92d06ec36b7a905fc5566fcf6a7eabfd8f13e
 }
 
