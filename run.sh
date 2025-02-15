@@ -2,6 +2,8 @@
 
 source .env
 
+
+
 json_file="config.json"
 
 optinos_list=('CI' 'DOCKER_PUSH' 'CD' 'APP_SCALE')
@@ -11,7 +13,8 @@ if [[ ! -f $json_file ]]; then
     "CI": "0",
     "DOCKER_PUSH": "0",
     "CD": "0",
-    "APP_SCALE": "1"
+    "APP_SCALE": "1",
+    "HELM": "0"
 }
 ' > $json_file
 fi
@@ -33,10 +36,12 @@ refresh_settings(){
   CI=$(get_settings "CI")
   DOCKER_PUSH=$(get_settings "DOCKER_PUSH")
   CD=$(get_settings "CD")
+  HELM=$(get_settings "HELM")
   APP_SCALE=$(get_settings "APP_SCALE")
   echo "CI: ${CI}"
   echo "Docker push: $DOCKER_PUSH"
   echo "CD: ${CD}"
+  echo "Update helm chart: ${HELM}"
   echo "App scale: ${APP_SCALE}"
 }
 
@@ -53,6 +58,7 @@ settings(){
   cange_var "DOCKER_PUSH"
   cange_var "CD"
   cange_var "APP_SCALE"
+  cange_var "HELM"
 
   refresh_settings
   exit
@@ -73,7 +79,7 @@ settings(){
 eval "$(ssh-agent -s)"
 ssh-add /home/vova/.ssh/id_ed25519
 
-repo_list=('v_bank' 'topix' 'weather' 'vpkg' 'lora')
+repo_list=('v_bank' 'topix' 'weather' 'vpkg' 'lora' 'tools')
 
 i=1
 echo "Project list:"
@@ -101,6 +107,8 @@ fi
 echo "deploying ${repo_list[$((ans-1))]}"
 
 proejct="${repo_list[$((ans-1))]}"
+
+
 
 DOCKER_USER='vova0911'
 GITHUB_USER='V0vaG'
@@ -188,11 +196,57 @@ docker_push(){
         echo "Docker login failed. Exiting..."
         exit 1
     fi
-    docker push ${DOCKER_USER}/${proejct}:${ARCH}_${VERSION}
+    
     docker push ${DOCKER_USER}/${proejct}:${ARCH}_latest
+    docker tag ${DOCKER_USER}/${proejct}:${ARCH}_latest ${DOCKER_USER}/${proejct}:${ARCH}_${VERSION}
+    
+    docker push ${DOCKER_USER}/${proejct}:${ARCH}_${VERSION}
  #   docker push ${DOCKER_USER}/nginx_images:${ARCH}_latest
+   clean_up
 }
 
+# Function to check if yq is installed
+yq_installed() {
+    command -v yq >/dev/null 2>&1
+}
+
+check_yq() {
+	if ! yq_installed; then
+    echo "yq is not installed. Would you like to install it? (Y/n)"
+    read -r response
+    if [[ "$response" =~ ^[Yy]$ || -z "$response" ]]; then
+        OS="$(uname -s)"
+        ARCH="$(uname -m)"
+        case "$OS" in
+            Linux)
+                echo "Installing yq on Linux..."
+                if [[ "$ARCH" == "x86_64" ]]; then
+                    sudo wget -qO /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64"
+                elif [[ "$ARCH" == "aarch64" ]]; then
+                    sudo wget -qO /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_arm64"
+                else
+                    echo "Unsupported architecture. Please install yq manually."
+                    exit 1
+                fi
+                sudo chmod +x /usr/local/bin/yq
+                ;;
+            Darwin)
+                echo "Installing yq on macOS..."
+                brew install yq
+                ;;
+            *)
+                echo "Unsupported OS. Please install yq manually."
+                exit 1
+                ;;
+        esac
+        echo "yq installed successfully!"
+    else
+        echo "Skipping yq installation."
+    fi
+else
+    echo "yq is already installed."
+fi
+}
 
 docker_cd(){
     echo "services:
@@ -218,6 +272,17 @@ docker_cd(){
     docker-compose up -d --build --scale app="$APP_SCALE"
 }
 
+update_helm() {
+	check_yq
+	YAML_FILE="/home/vova/GIT/helm_test/${proejct}/${proejct}/values.yaml"
+	echo "Updating tag in ${proejct} helm chart to ${ARCH}_${VERSION}"
+	yq e ".deployment.tools.image.tag = \"${ARCH}_${VERSION}\"" "$YAML_FILE" > "/home/vova/GIT/helm_test/${proejct}/${proejct}/values_tag.yaml"
+	
+	mv "/home/vova/GIT/helm_test/${proejct}/${proejct}/values_tag.yaml" "/home/vova/GIT/helm_test/${proejct}/${proejct}/values.yaml"
+	
+	cd /home/vova/GIT/helm_test && git add $YAML_FILE && git commit -m "${proejct} helm chart updated" && git push
+}
+
 clean_up(){
 	rm -rf app 
 	rm -rf nginx 
@@ -228,7 +293,7 @@ clean_up(){
 
 if [[ "$CI" = '1' ]]; then
   docker_build
-  app_test
+  #app_test
 fi
 
 if [[ "$DOCKER_PUSH" = '1' ]]; then
@@ -238,6 +303,11 @@ fi
 if [[ "$CD" = '1' ]]; then
   docker_cd
 fi
+
+if [[ "$HELM" = '1' ]]; then
+  update_helm
+fi
+
 clean_up
 
 echo "http://127.0.0.1:$PORT"

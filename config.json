@@ -1,7 +1,8 @@
 {
-    "CI": "0",
-    "DOCKER_PUSH": "0",
-    "CD": "1",
-    "APP_SCALE": "1"
+    "CI": "1",
+    "DOCKER_PUSH": "1",
+    "CD": "0",
+    "APP_SCALE": "1",
+    "HELM": "1"
 }
 
