@@ -2,8 +2,6 @@
 
 source .env
 
-
-
 json_file="config.json"
 
 optinos_list=('CI' 'DOCKER_CLONE' 'DOCKER_PUSH' 'CD' 'APP_SCALE')
@@ -14,11 +12,8 @@ if [[ ! -f $json_file ]]; then
     "DOCKER_PUSH": "0",
     "CD": "0",
     "APP_SCALE": "1",
-<<<<<<< HEAD
-    "HELM": "0"
-=======
-    "DOCKER_CLONE": "0",
->>>>>>> 46a92d06ec36b7a905fc5566fcf6a7eabfd8f13e
+    "HELM": "0",
+    "DOCKER_CLONE": "0"
 }
 ' > $json_file
 fi
@@ -55,7 +50,6 @@ refresh_settings
 
 settings(){
   refresh_settings
-
   cange_var(){
     read -p "set the var $1 to: " ans
     set_settings "$1" "$ans"
@@ -69,7 +63,6 @@ settings(){
 
   refresh_settings
   exit
-
 }
 
 # Start SSH agent and add the key
@@ -105,12 +98,14 @@ echo "deploying ${repo_list[$((ans-1))]}"
 
 proejct="${repo_list[$((ans-1))]}"
 
-
-
 DOCKER_USER='vova0911'
 GITHUB_USER='V0vaG'
-
 VOLUMES="['/home/$USER/script_files/${proejct}:/root/script_files/${proejct}']"
+
+ARCH=$(dpkg --print-architecture)
+VERSION='0.0.0'
+BUILD_NUM='on_premise'
+PORT='85'
 
 if [[ "$DOCKER_CLONE" = '1' ]]; then
   git clone git@github.com:${GITHUB_USER}/${proejct}_src.git
@@ -126,13 +121,6 @@ if [[ "$DOCKER_CLONE" = '1' ]]; then
 
 fi
 
-
-
-ARCH=$(dpkg --print-architecture)
-VERSION='0.0.0'
-BUILD_NUM='on_premise'
-PORT='85'
-
 dot_env_file="/home/vova/GIT/${proejct}_src/app/.env"
 env_file="${proejct}_src/app/env"
 
@@ -140,8 +128,7 @@ if [[ -f $dot_env_file ]]; then
 	echo "sourcing $dot_env_file"
 	source $dot_env_file
 else
-        echo "$dot_env_file not found"
-
+    echo "$dot_env_file not found"
 fi
 
 echo "Arch: $ARCH"
@@ -303,6 +290,7 @@ fi
 
 if [[ "$CD" = '1' ]]; then
   docker_cd
+  echo "http://127.0.0.1:$PORT"
 fi
 
 if [[ "$HELM" = '1' ]]; then
@@ -311,4 +299,4 @@ fi
 
 clean_up
 
-echo "http://127.0.0.1:$PORT"
+
