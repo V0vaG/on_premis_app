@@ -69,7 +69,7 @@ settings(){
 eval "$(ssh-agent -s)"
 ssh-add /home/vova/.ssh/id_ed25519
 
-repo_list=('v_bank' 'topix' 'weather' 'vpkg' 'lora' 'tools')
+repo_list=('v_bank' 'topix' 'weather' 'vpkg' 'lora' 'tools' 'vhub')
 
 i=1
 echo "Project list:"
@@ -264,7 +264,7 @@ update_helm() {
 	check_yq
 	YAML_FILE="/home/vova/GIT/helm_test/${proejct}/${proejct}/values.yaml"
 	echo "Updating tag in ${proejct} helm chart to ${ARCH}_${VERSION}"
-	yq e ".deployment.tools.image.tag = \"${ARCH}_${VERSION}\"" "$YAML_FILE" > "/home/vova/GIT/helm_test/${proejct}/${proejct}/values_tag.yaml"
+	yq e ".deployment.${proejct}.image.tag = \"${ARCH}_${VERSION}\"" "$YAML_FILE" > "/home/vova/GIT/helm_test/${proejct}/${proejct}/values_tag.yaml"
 	
 	mv "/home/vova/GIT/helm_test/${proejct}/${proejct}/values_tag.yaml" "/home/vova/GIT/helm_test/${proejct}/${proejct}/values.yaml"
 	
