@@ -185,7 +185,7 @@ docker_push(){
         exit 1
     fi
     
-    docker push ${DOCKER_USER}/${proejct}:${ARCH}_latest
+  #  docker push ${DOCKER_USER}/${proejct}:${ARCH}_latest
     docker tag ${DOCKER_USER}/${proejct}:${ARCH}_latest ${DOCKER_USER}/${proejct}:${ARCH}_${VERSION}
     
     docker push ${DOCKER_USER}/${proejct}:${ARCH}_${VERSION}
@@ -261,6 +261,7 @@ docker_cd(){
 }
 
 update_helm() {
+	cd ${HELM_DIR}/${HELM_REPO} && git pull
 	check_yq
 	if [ -d "${HELM_DIR}/${HELM_REPO}" ]; then
 		git clone $HELM_REPO_URL
