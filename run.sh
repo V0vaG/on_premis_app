@@ -262,13 +262,16 @@ docker_cd(){
 
 update_helm() {
 	check_yq
-	YAML_FILE="/home/vova/GIT/helm_test/${proejct}/${proejct}/values.yaml"
+	if [ -d "${HELM_DIR}/${HELM_REPO}" ]; then
+		git clone $HELM_REPO_URL
+	fi
+	YAML_FILE="${HELM_DIR}/${HELM_REPO}/${proejct}/${proejct}/values.yaml"
 	echo "Updating tag in ${proejct} helm chart to ${ARCH}_${VERSION}"
-	yq e ".deployment.${proejct}.image.tag = \"${ARCH}_${VERSION}\"" "$YAML_FILE" > "/home/vova/GIT/helm_test/${proejct}/${proejct}/values_tag.yaml"
+	yq e ".deployment.${proejct}.image.tag = \"${ARCH}_${VERSION}\"" "$YAML_FILE" > "${HELM_DIR}/${HELM_REPO}/${proejct}/${proejct}/values_tag.yaml"
 	
-	mv "/home/vova/GIT/helm_test/${proejct}/${proejct}/values_tag.yaml" "/home/vova/GIT/helm_test/${proejct}/${proejct}/values.yaml"
+	mv "${HELM_DIR}/${HELM_REPO}/${proejct}/${proejct}/values_tag.yaml" "${HELM_DIR}/${HELM_REPO}/${proejct}/${proejct}/values.yaml"
 	
-	cd /home/vova/GIT/helm_test && git add $YAML_FILE && git commit -m "${proejct} helm chart updated" && git push
+	cd ${HELM_DIR}/${HELM_REPO} && git add $YAML_FILE && git commit -m "${proejct} helm chart updated" && git push
 }
 
 clean_up(){
