@@ -318,22 +318,24 @@ docker_cd(){
 
 update_helm() {
   print_header "Updating image version in HELM chart"
-	cd ${HELM_DIR}/${HELM_REPO} && git pull
-	check_yq
-	if [ -d "${HELM_DIR}/${HELM_REPO}" ]; then
-		git clone $HELM_REPO_URL
-	fi
-	YAML_FILE="${HELM_DIR}/${HELM_REPO}/${proejct}/${proejct}/values.yaml"
-	echo "Updating tag in ${proejct} helm chart to ${ARCH}_${VERSION}"
-	yq e ".deployment.${proejct}.image.tag = \"${ARCH}_${VERSION}\"" "$YAML_FILE" > "${HELM_DIR}/${HELM_REPO}/${proejct}/${proejct}/values_tag.yaml"
-	
-	mv "${HELM_DIR}/${HELM_REPO}/${proejct}/${proejct}/values_tag.yaml" "${HELM_DIR}/${HELM_REPO}/${proejct}/${proejct}/values.yaml"
-	
-	cd ${HELM_DIR}/${HELM_REPO} && git add $YAML_FILE && git commit -m "${proejct} helm chart updated" && git push
+        cd ${HELM_DIR}/${HELM_REPO} && git pull
+        check_yq
+        if [ -d "${HELM_DIR}/${HELM_REPO}" ]; then
+                git clone $HELM_REPO_URL
+        fi
+        YAML_FILE="${HELM_DIR}/${HELM_REPO}/${proejct}/${proejct}/values.yaml"
+        echo "Updating tag in ${proejct} helm chart to ${ARCH}_${VERSION}"
+        yq e ".deployment.${proejct}.image.tag = \"${ARCH}_${VERSION}\"" "$YAML_FILE" > "${HELM_DIR}/${HELM_REPO}/${proejct}/${proejct}/values_tag.yaml"
+
+        mv "${HELM_DIR}/${HELM_REPO}/${proejct}/${proejct}/values_tag.yaml" "${HELM_DIR}/${HELM_REPO}/${proejct}/${proejct}/values.yaml"
+
+        cd ${HELM_DIR}/${HELM_REPO} && git add $YAML_FILE && git commit -m "${proejct} helm chart updated" && git push
 }
 
 clean_up(){
   print_header "Cleaning up temp files"
+  ls
+  pwd
 	rm -rf app 
 	rm -rf nginx 
 	rm -rf ${proejct}_src
@@ -348,7 +350,6 @@ fi
 if [[ "$APP_TEST" = '1' ]]; then
   app_test
 fi
-
 
 if [[ "$DOCKER_PUSH" = '1' ]]; then
   docker_push
