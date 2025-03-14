@@ -4,6 +4,8 @@ source .env
 
 json_file="config.json"
 
+BRANCH='add_cd'
+
 optinos_list=('CI' 'DOCKER_CLONE' 'DOCKER_PUSH' 'CD' 'APP_SCALE')
 
 if [[ ! -f $json_file ]]; then
@@ -69,7 +71,7 @@ settings(){
 eval "$(ssh-agent -s)"
 ssh-add /home/vova/.ssh/id_ed25519
 
-repo_list=('v_bank' 'topix' 'weather' 'vpkg' 'lora' 'tools' 'vhub')
+repo_list=('v_bank' 'topix' 'weather' 'vpkg' 'lora' 'tools' 'vhub' 'hello_world' 'test3')
 
 i=1
 echo "Project list:"
@@ -108,7 +110,7 @@ BUILD_NUM='on_premise'
 PORT='85'
 
 if [[ "$DOCKER_CLONE" = '1' ]]; then
-  git clone git@github.com:${GITHUB_USER}/${proejct}_src.git
+  git clone --branch ${BRANCH} --single-branch git@github.com:${GITHUB_USER}/${proejct}_src.git
   cp -r ${proejct}_src/app .
   cp -r ${proejct}_src/nginx .
   env_file="${proejct}_src/app/env"

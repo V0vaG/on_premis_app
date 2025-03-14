@@ -1,9 +1,0 @@
-{
-    "CI": "1",
-    "DOCKER_PUSH": "1",
-    "CD": "0",
-    "APP_SCALE": "1",
-    "HELM": "1",
-    "DOCKER_CLONE": "1"
-}
-
