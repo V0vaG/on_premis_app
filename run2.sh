@@ -106,7 +106,7 @@ case "$ans" in
 6) toggle_value "HELM" "$conf_file" ;;
 7) set_string "APP_SCALE" "$conf_file" ;;
 8) set_string "string" "$conf_file" ;;
-8) set_string "BRANCH" "$conf_file" ;;
+9) set_string "BRANCH" "$conf_file" ;;
 0) echo "Exiting..."; exit ;;
 *) echo "Invalid choice! Please enter 1, 2, or 0." ;;
 esac
